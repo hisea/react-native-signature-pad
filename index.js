@@ -1,12 +1,8 @@
 'use strict';
 
 import React, { Component } from 'react';
-import {
-  View,
-  WebView,
-  StyleSheet,
-} from 'react-native';
-import PropTypes from "prop-types";
+import { View, WebView, StyleSheet } from 'react-native';
+import PropTypes from 'prop-types';
 
 import htmlContent from './injectedHtml';
 import injectedSignaturePad from './injectedJavaScript/signaturePad';
@@ -18,7 +14,7 @@ class SignaturePad extends Component {
   static propTypes = {
     onChange: PropTypes.func,
     onError: PropTypes.func,
-    style: View.propTypes.style,
+    style: PropTypes.style,
     penColor: PropTypes.string,
     dataURL: PropTypes.string,
     height: PropTypes.number,
@@ -34,18 +30,19 @@ class SignaturePad extends Component {
     onChange: () => {},
     onError: () => {},
     style: {},
-    useFont: false
+    useFont: false,
   };
 
   constructor(props) {
     super(props);
     var escapedName = props.name.replace(/"/, `\\"`);
-    this.state = {base64DataUrl: props.dataURL || null, name: escapedName };
+    this.state = { base64DataUrl: props.dataURL || null, name: escapedName };
     const { backgroundColor } = StyleSheet.flatten(props.style);
-    var injectedJavaScript = injectedExecuteNativeFunction
-      + injectedErrorHandler
-      + injectedSignaturePad
-      + injectedApplication(
+    var injectedJavaScript =
+      injectedExecuteNativeFunction +
+      injectedErrorHandler +
+      injectedSignaturePad +
+      injectedApplication(
         props.penColor,
         backgroundColor,
         props.dataURL,
@@ -64,16 +61,17 @@ class SignaturePad extends Component {
     //  React Native app, the JS is re-injected every time a stroke is drawn.
   }
 
-  componentWillReceiveProps = (nextProps) => {
+  componentWillReceiveProps = nextProps => {
     if (this.props.useFont && this.state.name !== nextProps.name) {
       var escapedName = nextProps.name.replace(/"/, `\\"`);
       this.setState({ name: escapedName });
 
       const { backgroundColor } = StyleSheet.flatten(this.props.style);
-      var injectedJavaScript = injectedExecuteNativeFunction
-        + injectedErrorHandler
-        + injectedSignaturePad
-        + injectedApplication(
+      var injectedJavaScript =
+        injectedExecuteNativeFunction +
+        injectedErrorHandler +
+        injectedSignaturePad +
+        injectedApplication(
           this.props.penColor,
           backgroundColor,
           this.props.dataURL,
@@ -89,11 +87,11 @@ class SignaturePad extends Component {
     }
   };
 
-  _onNavigationChange = (args) => {
+  _onNavigationChange = args => {
     this._parseMessageFromWebViewNavigationChange(unescape(args.url));
   };
 
-  _parseMessageFromWebViewNavigationChange = (newUrl) => {
+  _parseMessageFromWebViewNavigationChange = newUrl => {
     // Example input:
     // applewebdata://4985ECDA-4C2B-4E37-87ED-0070D14EB985#executeFunction=jsError&arguments=%7B%22message%22:%22ReferenceError:%20Can't%20find%20variable:%20WHADDUP%22,%22url%22:%22applewebdata://4985ECDA-4C2B-4E37-87ED-0070D14EB985%22,%22line%22:340,%22column%22:10%7D"
     // All parameters to the native world are passed via a hash url where
@@ -125,19 +123,16 @@ class SignaturePad extends Component {
     }
 
     if (!this._attemptToExecuteNativeFunctionFromWebViewMessage(parameters)) {
-      logger.warn(
-        { parameters, hashUrl },
-        'Received an unknown set of parameters from WebView'
-      );
+      logger.warn({ parameters, hashUrl }, 'Received an unknown set of parameters from WebView');
     }
   };
 
-  _attemptToExecuteNativeFunctionFromWebViewMessage = (message) => {
-    if(message.executeFunction && message.arguments) {
+  _attemptToExecuteNativeFunctionFromWebViewMessage = message => {
+    if (message.executeFunction && message.arguments) {
       var parsedArguments = JSON.parse(message.arguments);
 
       var referencedFunction = this['_bridged_' + message.executeFunction];
-      if(typeof(referencedFunction) === 'function') {
+      if (typeof referencedFunction === 'function') {
         referencedFunction.apply(this, [parsedArguments]);
         return true;
       }
@@ -146,7 +141,7 @@ class SignaturePad extends Component {
     return false;
   };
 
-  _bridged_jsError = (args) => {
+  _bridged_jsError = args => {
     this.props.onError({ details: args });
   };
 
@@ -155,17 +150,16 @@ class SignaturePad extends Component {
     this.setState({ base64DataUrl });
   };
 
-  _renderError = (args) => {
+  _renderError = args => {
     this.props.onError({ details: args });
   };
 
-  _renderLoading = (args) => {
-  };
+  _renderLoading = args => {};
 
-  _onMessage = (event) => {
+  _onMessage = event => {
     var base64DataUrl = JSON.parse(event.nativeEvent.data);
     this._bridged_finishedStroke(base64DataUrl);
-  }
+  };
 
   render = () => {
     return (
